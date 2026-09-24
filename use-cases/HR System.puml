@@ -1,0 +1,34 @@
+@startuml
+
+left to right direction
+
+' Define the Actors (the humans using the system)
+actor "HR Advisor" as HR
+actor "Department Manager" as DM
+
+' Define the System Boundary (the box everything lives inside)
+rectangle "HR System" {
+
+    ' Define all 8 Use Cases (the bubbles)
+    usecase "UC1: Produce Report on All Salaries" as UC1
+    usecase "UC2: Produce Report on Department Salaries" as UC2
+    usecase "UC3: Produce Report on My Department Salaries" as UC3
+    usecase "UC4: Produce Report on Role Salaries" as UC4
+    usecase "UC5: Add New Employee Details" as UC5
+    usecase "UC6: View Employee Details" as UC6
+    usecase "UC7: Update Employee Details" as UC7
+    usecase "UC8: Delete Employee Details" as UC8
+}
+
+' Connect the Actors to their specific Use Cases using arrows
+HR --> UC1
+HR --> UC2
+HR --> UC4
+HR --> UC5
+HR --> UC6
+HR --> UC7
+HR --> UC8
+
+DM --> UC3
+
+@enduml
