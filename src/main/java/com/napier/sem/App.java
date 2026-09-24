@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class App {
 
@@ -99,12 +100,69 @@ public class App {
     public static void main(String[] args) {
         App app = new App();
 
+        // Connect to database
         app.connect();
 
-        // Get Employee and Display (The missing steps)
-        Employee emp = app.getEmployee(255530);
-        app.displayEmployee(emp);
+        // Get all engineers
+        ArrayList<Employee> employees = app.getSalariesByRole("Engineer");
 
+        // Print the salaries
+        app.printSalaries(employees);
+
+        // Disconnect from database
         app.disconnect();
+    }
+
+    public ArrayList<Employee> getSalariesByRole(String role) {
+        try {
+            // Create an SQL statement
+            Statement stmt = con.createStatement();
+            // Create string for SQL statement
+            String strSelect =
+                    "SELECT employees.emp_no, employees.first_name, employees.last_name, salaries.salary "
+                            + "FROM employees, salaries, titles "
+                            + "WHERE employees.emp_no = salaries.emp_no "
+                            + "AND employees.emp_no = titles.emp_no "
+                            + "AND salaries.to_date = '9999-01-01' "
+                            + "AND titles.to_date = '9999-01-01' "
+                            + "AND titles.title = '" + role + "' "
+                            + "ORDER BY employees.emp_no ASC";
+
+            // Execute SQL statement
+            ResultSet rset = stmt.executeQuery(strSelect);
+
+            // Extract employee information
+            ArrayList<Employee> employees = new ArrayList<Employee>();
+            while (rset.next()) {
+                Employee emp = new Employee();
+                emp.setEmp_no(rset.getInt("emp_no"));
+                emp.setFirst_name(rset.getString("first_name"));
+                emp.setLast_name(rset.getString("last_name"));
+                emp.setSalary(rset.getInt("salary"));
+                employees.add(emp);
+            }
+            return employees;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get salary details");
+            return null;
+        }
+    }
+
+    public void printSalaries(ArrayList<Employee> employees) {
+        // Check employees is not null
+        if (employees == null) {
+            System.out.println("No employees found.");
+            return;
+        }
+        // Print header
+        System.out.println(String.format("%-10s %-15s %-20s %-8s", "Emp No", "First Name", "Last Name", "Salary"));
+        // Loop over all employees in the list
+        for (Employee emp : employees) {
+            String emp_string =
+                    String.format("%-10s %-15s %-20s %-8s",
+                            emp.getEmp_no(), emp.getFirst_name(), emp.getLast_name(), emp.getSalary());
+            System.out.println(emp_string);
+        }
     }
 }
