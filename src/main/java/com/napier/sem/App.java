@@ -21,8 +21,8 @@ public class App {
 
         String dbLocation = System.getenv("DB_LOCATION");
         if (dbLocation == null || dbLocation.isEmpty()) {
-            // Updated to match the port mapped in your docker-compose.yml
-            dbLocation = "localhost:33060";
+            // When running in Docker, we must use the container name ('db') and internal port (3306)
+            dbLocation = "db:3306";
         }
 
         // Updated database name from /world to /employees
@@ -98,19 +98,22 @@ public class App {
     }
 
     public static void main(String[] args) {
-        App app = new App();
+        // Create new Application
+        App a = new App();
 
         // Connect to database
-        app.connect();
+        a.connect();
 
-        // Get all engineers
-        ArrayList<Employee> employees = app.getSalariesByRole("Engineer");
+        // Extract employee salary information
+        ArrayList employees = a.getAllSalaries();
 
-        // Print the salaries
-        app.printSalaries(employees);
+        // Test the size of the returned data - should be 240124
+        if (employees != null) {
+            System.out.println(employees.size());
+        }
 
         // Disconnect from database
-        app.disconnect();
+        a.disconnect();
     }
 
     public ArrayList<Employee> getSalariesByRole(String role) {
@@ -163,6 +166,38 @@ public class App {
                     String.format("%-10s %-15s %-20s %-8s",
                             emp.getEmp_no(), emp.getFirst_name(), emp.getLast_name(), emp.getSalary());
             System.out.println(emp_string);
+        }
+    }
+    public ArrayList getAllSalaries() {
+        try {
+            // Create an SQL statement
+            Statement stmt = con.createStatement();
+            // Create string for SQL statement
+            String strSelect =
+                    "SELECT employees.emp_no, employees.first_name, employees.last_name, salaries.salary "
+                            + "FROM employees, salaries "
+                            + "WHERE employees.emp_no = salaries.emp_no AND salaries.to_date = '9999-01-01' "
+                            + "ORDER BY employees.emp_no ASC";
+
+            // Execute SQL statement
+            ResultSet rset = stmt.executeQuery(strSelect);
+
+            // Extract employee information
+            ArrayList employees = new ArrayList();
+            while (rset.next()) {
+                Employee emp = new Employee();
+                // Using your setters and standard column names
+                emp.setEmp_no(rset.getInt("emp_no"));
+                emp.setFirst_name(rset.getString("first_name"));
+                emp.setLast_name(rset.getString("last_name"));
+                emp.setSalary(rset.getInt("salary"));
+                employees.add(emp);
+            }
+            return employees;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get salary details");
+            return null;
         }
     }
 }
