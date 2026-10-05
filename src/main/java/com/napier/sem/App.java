@@ -11,52 +11,34 @@ public class App {
 
     private Connection con = null;
 
-    public void connect() {
+    public void connect(String location) {
         try {
+            // Load Database driver
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             System.out.println("Could not load SQL driver");
             System.exit(-1);
         }
 
-        String dbLocation = System.getenv("DB_LOCATION");
-
-        if (dbLocation == null || dbLocation.isEmpty()) {
-            // When running in Docker, use the container name "db"
-            // and the internal MySQL port 3306
-            dbLocation = "db:33060";
-        }
-
-        // Connect to the employees database
-        // Connect to the employees database
-        String url = "jdbc:mysql://localhost:33060/employees?useSSL=false&allowPublicKeyRetrieval=true";
-
-        String user = "root";
-        String password = "example";
-
         int retries = 10;
-
         for (int i = 0; i < retries; ++i) {
             System.out.println("Connecting to database...");
-
             try {
-                Thread.sleep(5000);
+                // Wait a bit for db to start
+                Thread.sleep(30000);
 
-                con = DriverManager.getConnection(url, user, password);
+                // Connect to database using the passed location parameter
+                con = DriverManager.getConnection("jdbc:mysql://" + location
+                                + "/employees?allowPublicKeyRetrieval=true&useSSL=false",
+                        "root", "example");
 
                 System.out.println("Successfully connected");
                 break;
-
             } catch (SQLException sqle) {
-                System.out.println(
-                        "Failed to connect to database attempt " + i
-                );
+                System.out.println("Failed to connect to database attempt " + Integer.toString(i));
                 System.out.println(sqle.getMessage());
-
             } catch (InterruptedException ie) {
-                System.out.println(
-                        "Thread interrupted? Should not happen."
-                );
+                System.out.println("Thread interrupted? Should not happen.");
             }
         }
     }
@@ -125,22 +107,32 @@ public class App {
     }
 
     public static void main(String[] args) {
+        // Create new Application
         App a = new App();
-        a.connect();
+
+        // Connect to database
+        // If no arguments are passed, assume we are running locally in IntelliJ
+        if (args.length < 1) {
+            a.connect("localhost:33060");
+        } else {
+            // Otherwise, use the argument passed by Docker/GitHub Actions (e.g., db:3306)
+            a.connect(args[0]);
+        }
 
         // 1. Get the Sales department
         Department salesDept = a.getDepartment("Sales");
 
         // 2. Get the salaries for that department
         if (salesDept != null) {
-            ArrayList employees = a.getSalariesByDepartment(salesDept);
+            ArrayList<Employee> employees = a.getSalariesByDepartment(salesDept);
 
-            // 3. Print the results using your existing print method
+            // 3. Print the results
             a.printSalaries(employees);
         } else {
             System.out.println("Department not found.");
         }
 
+        // Disconnect from database
         a.disconnect();
     }
     /**
