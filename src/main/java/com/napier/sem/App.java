@@ -28,8 +28,8 @@ public class App {
         }
 
         // Connect to the employees database
-        String url = "jdbc:mysql://" + dbLocation
-                + "/employees?useSSL=false&allowPublicKeyRetrieval=true";
+        // Connect to the employees database
+        String url = "jdbc:mysql://localhost:33060/employees?useSSL=false&allowPublicKeyRetrieval=true";
 
         String user = "root";
         String password = "example";
@@ -125,27 +125,24 @@ public class App {
     }
 
     public static void main(String[] args) {
-
         App a = new App();
-
         a.connect();
 
-        // Get all current employee salaries
-        ArrayList<Employee> employees = a.getAllSalaries();
+        // 1. Get the Sales department
+        Department salesDept = a.getDepartment("Sales");
 
-        if (employees != null) {
+        // 2. Get the salaries for that department
+        if (salesDept != null) {
+            ArrayList employees = a.getSalariesByDepartment(salesDept);
 
-            System.out.println(
-                    "Number of employees: " + employees.size()
-            );
-
-            // Print employee salary information
+            // 3. Print the results using your existing print method
             a.printSalaries(employees);
+        } else {
+            System.out.println("Department not found.");
         }
 
         a.disconnect();
     }
-
     /**
      * Gets all current employee salaries.
      *
@@ -246,6 +243,67 @@ public class App {
                     );
 
             System.out.println(emp_string);
+        }
+    }
+    public Department getDepartment(String dept_name) {
+        try {
+            Statement stmt = con.createStatement();
+
+            String strSelect =
+                    "SELECT dept_no, dept_name "
+                            + "FROM departments "
+                            + "WHERE dept_name = '" + dept_name + "'";
+
+            ResultSet rset = stmt.executeQuery(strSelect);
+
+            if (rset.next()) {
+                Department dept = new Department();
+
+                // Directly accessing the public fields from your Department class
+                dept.dept_no = rset.getString("dept_no");
+                dept.dept_name = rset.getString("dept_name");
+
+                return dept;
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get department details");
+            return null;
+        }
+    }
+    public ArrayList getSalariesByDepartment(Department dept) {
+        try {
+            Statement stmt = con.createStatement();
+
+            // Replaced  with direct access to dept.dept_no
+            String strSelect =
+                    "SELECT employees.emp_no, employees.first_name, employees.last_name, salaries.salary "
+                            + "FROM employees, salaries, dept_emp, departments "
+                            + "WHERE employees.emp_no = salaries.emp_no "
+                            + "AND employees.emp_no = dept_emp.emp_no "
+                            + "AND dept_emp.dept_no = departments.dept_no "
+                            + "AND salaries.to_date = '9999-01-01' "
+                            + "AND departments.dept_no = '" + dept.dept_no + "' "
+                            + "ORDER BY employees.emp_no ASC";
+
+            ResultSet rset = stmt.executeQuery(strSelect);
+            ArrayList employees = new ArrayList<>();
+
+            while (rset.next()) {
+                Employee emp = new Employee();
+                emp.setEmp_no(rset.getInt("emp_no"));
+                emp.setFirst_name(rset.getString("first_name"));
+                emp.setLast_name(rset.getString("last_name"));
+                emp.setSalary(rset.getInt("salary"));
+                employees.add(emp);
+            }
+            return employees;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("Failed to get salaries by department");
+            return null;
         }
     }
 }

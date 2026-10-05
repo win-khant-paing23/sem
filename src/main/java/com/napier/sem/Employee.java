@@ -30,7 +30,7 @@ public class Employee
 
     /* Employee's manager
         */
-    private String manager;
+    private Employee manager;
 
     // Getters and Setters
 
@@ -82,11 +82,11 @@ public class Employee
         this.dept_name = dept_name;
     }
 
-    public String getManager() {
+    public Employee getManager() {
         return manager;
     }
 
-    public void setManager(String manager) {
+    public void setManager(Employee manager) {
         this.manager = manager;
     }
 }
