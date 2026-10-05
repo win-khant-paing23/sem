@@ -115,10 +115,9 @@ public class App {
         if (args.length < 1) {
             a.connect("localhost:33060");
         } else {
-            // Otherwise, use the argument passed by Docker/GitHub Actions (e.g., db:3306)
-            a.connect(args[0]);
+            // Ignore the broken args[0] and force the correct internal Docker URL
+            a.connect("db:3306");
         }
-
         // 1. Get the Sales department
         Department salesDept = a.getDepartment("Sales");
 

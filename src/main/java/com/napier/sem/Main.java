@@ -12,7 +12,8 @@ public class Main {
         if (args.length < 1) {
             a.connect("localhost:33060");
         } else {
-            a.connect(args[0]);
+            // Ignore the broken args[0] and force the correct internal Docker URL
+            a.connect("db:3306");
         }
         // Disconnect from database
         a.disconnect();
