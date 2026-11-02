@@ -11,7 +11,7 @@ public class App {
 
     private Connection con = null;
 
-    public void connect(String location) {
+    public void connect(String location, int delay) {
         try {
             // Load Database driver
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -25,17 +25,15 @@ public class App {
             System.out.println("Connecting to database...");
             try {
                 // Wait a bit for db to start
-                Thread.sleep(30000);
-
-                // Connect to database using the passed location parameter
+                Thread.sleep(delay);
+                // Connect to database
                 con = DriverManager.getConnection("jdbc:mysql://" + location
                                 + "/employees?allowPublicKeyRetrieval=true&useSSL=false",
                         "root", "example");
-
                 System.out.println("Successfully connected");
                 break;
             } catch (SQLException sqle) {
-                System.out.println("Failed to connect to database attempt " + Integer.toString(i));
+                System.out.println("Failed to connect to database attempt " +                                  Integer.toString(i));
                 System.out.println(sqle.getMessage());
             } catch (InterruptedException ie) {
                 System.out.println("Thread interrupted? Should not happen.");
@@ -107,29 +105,21 @@ public class App {
     }
 
     public static void main(String[] args) {
-        // Create new Application
+        // Create new Application and connect to database
         App a = new App();
 
-        // Connect to database
-        // If no arguments are passed, assume we are running locally in IntelliJ
-        if (args.length < 1) {
-            a.connect("localhost:33060");
-        } else {
-            // Ignore the broken args[0] and force the correct internal Docker URL
-            a.connect("db:3306");
+        if(args.length < 1){
+            a.connect("localhost:33060", 30000);
+        }else{
+            a.connect(args[0], Integer.parseInt(args[1]));
         }
-        // 1. Get the Sales department
-        Department salesDept = a.getDepartment("Sales");
 
-        // 2. Get the salaries for that department
-        if (salesDept != null) {
-            ArrayList<Employee> employees = a.getSalariesByDepartment(salesDept);
+        Department dept = a.getDepartment("Development");
+        ArrayList<Employee> employees = a.getSalariesByDepartment(dept);
 
-            // 3. Print the results
-            a.printSalaries(employees);
-        } else {
-            System.out.println("Department not found.");
-        }
+
+        // Print salary report
+        a.printSalaries(employees);
 
         // Disconnect from database
         a.disconnect();
